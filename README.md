@@ -1,4 +1,2 @@
-solid-stripe
+solid-sprite
 ============
-
-Sprite making like a boss

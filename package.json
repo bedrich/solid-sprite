@@ -1,0 +1,20 @@
+{
+    "author": "Bedrich Rios <me@bedrichrios.com> (bedrichrios.com)",
+    "name": "solid-sprite",
+    "description": "Sprites like a boss",
+    "version": "0.0.1",
+    "homepage": "github.com/bedrich/solid-sprite",
+    "repository": {
+        "type": "git",
+        "url": "git://github.com/bedrich/solid-sprite.git"
+    },
+    "dependencies": {
+    	"imagemagick": "0.1.2",
+    	"async": "0.1.22"
+	},
+    "devDependencies": {},
+    "optionalDependencies": {},
+    "engines": {
+        "node": ">=0.8.1"
+    }
+}

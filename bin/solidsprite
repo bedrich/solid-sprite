@@ -1,0 +1,92 @@
+#!/usr/bin/env node
+
+var im = require('imagemagick');
+var fs = require('fs');
+var async = require('async');
+
+var dir = process.cwd() + '/' + process.argv[2];
+var sprite_filename = dir + (process.argv[3] || 'sprite.png');
+
+if (!fs.existsSync(dir)) {
+	console.log('Image directory not found');
+	process.exit(1);
+}
+
+var images = fs.readdirSync(dir);
+for (var i = 0, len = images.length; i < len; i++) {
+	images[i] = dir + images[i];
+}
+
+async.map(images, im.identify, function(err, results) {
+	if (err) throw err;
+	var mapped_images = mapImages(images, results);
+	var commands = mapCommands(mapped_images, sprite_filename);
+
+	im.convert(commands, function(err, stdout) {
+		if (err) throw err;
+
+		console.log('Sprite successfully created');
+	});
+});
+
+function mapCommands(imgs, output) {
+	var cmds = [];
+
+	for (var i = 0, len = imgs.length; i < len; i++) {
+		cmds.push(
+			'-background',
+			'none',
+			'-pointsize',
+			'11',
+			'-font',
+			'Verdana',
+			'-size',
+			'100x20',
+			'-fill',
+			'black',
+			'-page',
+			['+0+', imgs[i].position.y].join(''),
+			['label:', imgs[i].position.x, ':', imgs[i].position.y, '_', imgs[i].dims.w, 'x', imgs[i].dims.h].join(''),
+			'-page',
+			['+', imgs[i].position.x, '+', imgs[i].position.y].join(''),
+			imgs[i].filename
+		);
+	}
+
+	return cmds.concat([
+			'-background',
+			'none',
+			'-layers',
+			'mosaic',
+			output
+		]);
+}
+
+function mapImages(imgs, metadata) {
+	var merged = [];
+	var gutter = 100;
+	var grid = 24;
+	var pos = 0;
+
+	for (var i = 0, len = imgs.length; i < len; i++) {
+		merged.push({
+			filename: imgs[i],
+			dims: {
+				h: metadata[i].height,
+				w: metadata[i].width
+			},
+			position: {
+				x: gutter,
+				y: pos
+			}
+		});
+
+		if (metadata[i].height > grid) {
+			pos += Math.ceil(metadata[i].height / grid) * grid;
+		} else {
+			pos += grid;
+		}
+	}
+
+	return merged;
+}
