@@ -3,12 +3,13 @@
 var im = require('imagemagick');
 var fs = require('fs');
 var async = require('async');
+var colors = require('colors');
 
 var dir = process.cwd() + '/' + process.argv[2];
 var sprite_filename = dir + (process.argv[3] || 'sprite.png');
 
 if (!fs.existsSync(dir)) {
-	console.log('Image directory not found');
+	console.log('Image directory not found'.red);
 	process.exit(1);
 }
 
@@ -25,7 +26,7 @@ async.map(images, im.identify, function(err, results) {
 	im.convert(commands, function(err, stdout) {
 		if (err) throw err;
 
-		console.log('Sprite successfully created');
+		console.log('Sprite successfully created'.green);
 	});
 });
 
@@ -43,7 +44,7 @@ function mapCommands(imgs, output) {
 			'-size',
 			'100x20',
 			'-fill',
-			'black',
+			'grey',
 			'-page',
 			['+0+', imgs[i].position.y].join(''),
 			['label:', imgs[i].position.x, ':', imgs[i].position.y, '_', imgs[i].dims.w, 'x', imgs[i].dims.h].join(''),
