@@ -19,13 +19,12 @@ if (!fs.existsSync(dir)) {
 var images = fs.readdirSync(dir).map(function(img) { return dir + img; });
 var images_metadata;
 
-exec('gm identify ' + images.join(' '), function (err, stdout, stderr) {
+exec('identify ' + images.join(' '), function (err, stdout, stderr) {
 	if (err) throw err;
 	images_metadata = formatIdentify(stdout.split('\n'));
 
-	exec('gm convert ' + formatMontageArgs(images_metadata, opts), function (err, stdout, stderr) {
+	exec('convert ' + formatMontageArgs(images_metadata, opts), function (err, stdout, stderr) {
 		if (err) throw err;
-
 		console.log('Sprite image successfully created.'.green);
 	});
 });
@@ -37,13 +36,12 @@ function formatIdentify (id_arr) {
 		var id_info = id_arr[i].split(' ');
 
 		if (id_info.length > 1) {
-			var dimensions = id_info[2].substring(0, id_info[2].indexOf('+'));
 			id_formatted.push({
 				'filepath': (i > 0) ? id_info[0].slice(0, -(2 + i.toString().length)) : id_info[0], // removes "[i]" from end of string
 				'filetype': id_info[1],
 				'size': {
-					'h': dimensions.split('x')[1],
-					'w': dimensions.split('x')[0]
+					'h': id_info[2].split('x')[1],
+					'w': id_info[2].split('x')[0]
 				}
 			});
 		}
@@ -59,8 +57,21 @@ function formatMontageArgs(imgs, opts) {
 	for (var i = 0, len = imgs.length; i < len; i++) {
 		var img = imgs[i];
 		args.push(
+			'-background',
+			'gray',
+			'-pointsize',
+			'11',
+			'-font',
+			'Verdana',
+			'-size',
+			[opts.gap - 20, 'x20'].join(''),
+			'-fill',
+			'white',
 			'-page',
-			'+' + opts.gap + '+' + yPos,
+			['+0+', yPos].join(''),
+			['label:', '[', (yPos / opts.grid), ']', img.size.w, 'x', img.size.h].join(''),
+			'-page',
+			['+', opts.gap, '+', yPos].join(''),
 			img.filepath);
 
 		if (img.size.h > opts.grid) {
@@ -71,9 +82,9 @@ function formatMontageArgs(imgs, opts) {
 	}
 
 	args.push(
-		'-mosaic',
 		'-background',
 		'none',
+		'-mosaic',
 		opts.output);
 	return args.join(' ');
 }
