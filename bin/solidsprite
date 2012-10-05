@@ -1,93 +1,79 @@
 #!/usr/bin/env node
 
-var im = require('imagemagick');
 var fs = require('fs');
-var async = require('async');
 var colors = require('colors');
+var exec = require('child_process').exec;
 
 var dir = process.cwd() + '/' + process.argv[2];
-var sprite_filename = dir + (process.argv[3] || 'sprite.png');
+var opts = {
+	output: dir + (process.argv[3] || 'sprite.png'),
+	grid: 24,
+	gap: 100
+};
 
 if (!fs.existsSync(dir)) {
 	console.log('Image directory not found'.red);
 	process.exit(1);
 }
 
-var images = fs.readdirSync(dir);
-for (var i = 0, len = images.length; i < len; i++) {
-	images[i] = dir + images[i];
-}
+var images = fs.readdirSync(dir).map(function(img) { return dir + img; });
+var images_metadata;
 
-async.map(images, im.identify, function(err, results) {
+exec('gm identify ' + images.join(' '), function (err, stdout, stderr) {
 	if (err) throw err;
-	var mapped_images = mapImages(images, results);
-	var commands = mapCommands(mapped_images, sprite_filename);
+	images_metadata = formatIdentify(stdout.split('\n'));
 
-	im.convert(commands, function(err, stdout) {
+	exec('gm convert ' + formatMontageArgs(images_metadata, opts), function (err, stdout, stderr) {
 		if (err) throw err;
 
-		console.log('Sprite successfully created'.green);
+		console.log('Sprite image successfully created.'.green);
 	});
 });
 
-function mapCommands(imgs, output) {
-	var cmds = [];
+function formatIdentify (id_arr) {
+	var id_formatted = [];
 
-	for (var i = 0, len = imgs.length; i < len; i++) {
-		cmds.push(
-			'-background',
-			'none',
-			'-pointsize',
-			'11',
-			'-font',
-			'Verdana',
-			'-size',
-			'100x20',
-			'-fill',
-			'grey',
-			'-page',
-			['+0+', imgs[i].position.y].join(''),
-			['label:', imgs[i].position.x, ':', imgs[i].position.y, '_', imgs[i].dims.w, 'x', imgs[i].dims.h].join(''),
-			'-page',
-			['+', imgs[i].position.x, '+', imgs[i].position.y].join(''),
-			imgs[i].filename
-		);
-	}
+	for (var i = 0, len= id_arr.length; i < len; i++) {
+		var id_info = id_arr[i].split(' ');
 
-	return cmds.concat([
-			'-background',
-			'none',
-			'-layers',
-			'mosaic',
-			output
-		]);
-}
-
-function mapImages(imgs, metadata) {
-	var merged = [];
-	var gutter = 100;
-	var grid = 24;
-	var pos = 0;
-
-	for (var i = 0, len = imgs.length; i < len; i++) {
-		merged.push({
-			filename: imgs[i],
-			dims: {
-				h: metadata[i].height,
-				w: metadata[i].width
-			},
-			position: {
-				x: gutter,
-				y: pos
-			}
-		});
-
-		if (metadata[i].height > grid) {
-			pos += Math.ceil(metadata[i].height / grid) * grid;
-		} else {
-			pos += grid;
+		if (id_info.length > 1) {
+			var dimensions = id_info[2].substring(0, id_info[2].indexOf('+'));
+			id_formatted.push({
+				'filepath': (i > 0) ? id_info[0].slice(0, -(2 + i.toString().length)) : id_info[0], // removes "[i]" from end of string
+				'filetype': id_info[1],
+				'size': {
+					'h': dimensions.split('x')[1],
+					'w': dimensions.split('x')[0]
+				}
+			});
 		}
 	}
 
-	return merged;
+	return id_formatted;
+}
+
+function formatMontageArgs(imgs, opts) {
+	var args = [];
+	var yPos = 0;
+
+	for (var i = 0, len = imgs.length; i < len; i++) {
+		var img = imgs[i];
+		args.push(
+			'-page',
+			'+' + opts.gap + '+' + yPos,
+			img.filepath);
+
+		if (img.size.h > opts.grid) {
+			yPos += Math.ceil(img.size.h / opts.grid) * opts.grid;
+		} else {
+			yPos += opts.grid;
+		}
+	}
+
+	args.push(
+		'-mosaic',
+		'-background',
+		'none',
+		opts.output);
+	return args.join(' ');
 }
