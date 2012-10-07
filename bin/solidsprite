@@ -24,11 +24,15 @@ if (!fs.existsSync(opts.input)) {
 if (!opts.trim) {
 	createSprite();
 } else {
+	trimImages(createSprite);
+}
+
+function trimImages (cb) {
 	console.log('‣' + ' Trimming images...');
 	exec('mogrify -trim +repage ' + opts.images.join(' '), function (err, stdout, stderr) {
 		if (err) throw err;
 		console.log('✓'.green + ' Trimming completed');
-		createSprite();
+		cb.call();
 	});
 }
 
