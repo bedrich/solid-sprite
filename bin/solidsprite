@@ -52,32 +52,30 @@ function formatIdentify (id_arr) {
 
 function formatMontageArgs(imgs, opts) {
 	var args = [];
-	var yPos = 0;
+	var y_pos = 0;
 
 	for (var i = 0, len = imgs.length; i < len; i++) {
 		var img = imgs[i];
 		args.push(
 			'-background',
-			'gray',
+			'black',
 			'-pointsize',
 			'11',
 			'-font',
-			'Verdana',
-			'-size',
-			[opts.gap - 20, 'x20'].join(''),
+			'verdana',
 			'-fill',
 			'white',
 			'-page',
-			['+0+', yPos].join(''),
-			['label:', '[', (yPos / opts.grid), ']', img.size.w, 'x', img.size.h].join(''),
+			['+0+', y_pos].join(''),
+			['label:', '[', (y_pos / opts.grid), ']', img.size.w, 'x', img.size.h].join(''),
 			'-page',
-			['+', opts.gap, '+', yPos].join(''),
+			['+', opts.gap, '+', y_pos].join(''),
 			img.filepath);
 
 		if (img.size.h > opts.grid) {
-			yPos += Math.ceil(img.size.h / opts.grid) * opts.grid;
+			y_pos += Math.ceil(img.size.h / opts.grid) * opts.grid;
 		} else {
-			yPos += opts.grid;
+			y_pos += opts.grid;
 		}
 	}
 
