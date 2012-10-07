@@ -3,31 +3,48 @@
 var fs = require('fs');
 var colors = require('colors');
 var exec = require('child_process').exec;
+var path = require('path');
 
-var dir = process.cwd() + '/' + process.argv[2];
+var args = process.argv.slice(2);
 var opts = {
-	output: dir + (process.argv[3] || 'sprite.png'),
-	grid: 24,
-	gap: 100
+	grid: 30,
+	gap: 100,
+	input: path.resolve(process.cwd(), args[0]),
+	output: path.resolve(process.cwd(), args[1]),
+	trim: (args[2] && args[2] === '-trim') ? true : false
 };
 
-if (!fs.existsSync(dir)) {
-	console.log('Image directory not found'.red);
+if (!fs.existsSync(opts.input)) {
+	console.log('✖ '.red + opts.input + ' does not exist.');
 	process.exit(1);
+} else {
+	opts.images = fs.readdirSync(opts.input).map(function(img) { return opts.input + '/' + img; });
 }
 
-var images = fs.readdirSync(dir).map(function(img) { return dir + img; });
-var images_metadata;
-
-exec('identify ' + images.join(' '), function (err, stdout, stderr) {
-	if (err) throw err;
-	images_metadata = formatIdentify(stdout.split('\n'));
-
-	exec('convert ' + formatMontageArgs(images_metadata, opts), function (err, stdout, stderr) {
+if (!opts.trim) {
+	createSprite();
+} else {
+	console.log('‣' + ' Trimming images...');
+	exec('mogrify -trim +repage ' + opts.images.join(' '), function (err, stdout, stderr) {
 		if (err) throw err;
-		console.log('Sprite image successfully created.'.green);
+		console.log('✓'.green + ' Trimming completed');
+		createSprite();
 	});
-});
+}
+
+function createSprite () {
+	console.log('‣' + ' Piecing sprite together...');
+	exec('identify ' + opts.images.join(' '), function (err, stdout, stderr) {
+		if (err) throw err;
+		var images_metadata = formatIdentify(stdout.split('\n'));
+
+		exec('convert ' + formatMontageArgs(images_metadata), function (err, stdout, stderr) {
+			if (err) throw err;
+			console.log('✓'.green + ' Sprite completed.');
+			console.log('‣ ' + opts.output);
+		});
+	});
+}
 
 function formatIdentify (id_arr) {
 	var id_formatted = [];
@@ -50,7 +67,7 @@ function formatIdentify (id_arr) {
 	return id_formatted;
 }
 
-function formatMontageArgs(imgs, opts) {
+function formatMontageArgs(imgs) {
 	var args = [];
 	var y_pos = 0;
 
