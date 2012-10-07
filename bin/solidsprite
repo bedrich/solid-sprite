@@ -29,7 +29,7 @@ if (!opts.trim) {
 
 function trimImages (cb) {
 	console.log('‣' + ' Trimming images...');
-	exec('mogrify -trim +repage ' + opts.images.join(' '), function (err, stdout, stderr) {
+	exec('mogrify -trim ' + opts.images.join(' '), function (err, stdout, stderr) {
 		if (err) throw err;
 		console.log('✓'.green + ' Trimming completed');
 		cb.call();
@@ -87,10 +87,10 @@ function formatMontageArgs(imgs) {
 			'-fill',
 			'white',
 			'-page',
-			['+0+', y_pos].join(''),
+			['+', parseInt(img.size.w, 10) + opts.grid, '+', y_pos].join(''),
 			['label:', '[', (y_pos / opts.grid), ']', img.size.w, 'x', img.size.h].join(''),
 			'-page',
-			['+', opts.gap, '+', y_pos].join(''),
+			['+0+', y_pos].join(''),
 			img.filepath);
 
 		if (img.size.h > opts.grid) {
