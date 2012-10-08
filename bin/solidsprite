@@ -8,9 +8,8 @@ var path = require('path');
 var args = process.argv.slice(2);
 var opts = {
 	grid: 30,
-	gap: 100,
 	input: path.resolve(process.cwd(), args[0]),
-	output: path.resolve(process.cwd(), args[1]),
+	output: path.resolve(process.cwd(), args[1] || 'solidsprite.png'),
 	trim: (args[2] && args[2] === '-trim') ? true : false
 };
 
@@ -51,13 +50,17 @@ function createSprite () {
 }
 
 function formatIdentify (id_arr) {
-	var id_formatted = [];
+	var id_formatted = {
+		info: { maxwidth: 0 },
+		imgs: []
+	};
 
 	for (var i = 0, len= id_arr.length; i < len; i++) {
 		var id_info = id_arr[i].split(' ');
 
 		if (id_info.length > 1) {
-			id_formatted.push({
+			id_formatted.info.maxwidth = Math.max(id_formatted.info.maxwidth, id_info[2].split('x')[0]);
+			id_formatted.imgs.push({
 				'filepath': (i > 0) ? id_info[0].slice(0, -(2 + i.toString().length)) : id_info[0], // removes "[i]" from end of string
 				'filetype': id_info[1],
 				'size': {
@@ -71,24 +74,26 @@ function formatIdentify (id_arr) {
 	return id_formatted;
 }
 
-function formatMontageArgs(imgs) {
+function formatMontageArgs(metadata) {
 	var args = [];
 	var y_pos = 0;
 
-	for (var i = 0, len = imgs.length; i < len; i++) {
-		var img = imgs[i];
+	for (var i = 0, len = metadata.imgs.length; i < len; i++) {
+		var img = metadata.imgs[i];
+		var square_pos = (y_pos / opts.grid);
+
 		args.push(
 			'-background',
-			'black',
+			'gray',
 			'-pointsize',
 			'11',
 			'-font',
-			'verdana',
+			'Verdana',
 			'-fill',
 			'white',
 			'-page',
-			['+', parseInt(img.size.w, 10) + opts.grid, '+', y_pos].join(''),
-			['label:', '[', (y_pos / opts.grid), ']', img.size.w, 'x', img.size.h].join(''),
+			['+', metadata.info.maxwidth + opts.grid, '+', y_pos].join(''),
+			['label:', '[', square_pos, ']', img.size.w, 'x', img.size.h].join(''),
 			'-page',
 			['+0+', y_pos].join(''),
 			img.filepath);
