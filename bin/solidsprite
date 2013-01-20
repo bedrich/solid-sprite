@@ -1,23 +1,50 @@
 #!/usr/bin/env node
 
 var fs = require('fs');
+var nopt = require('nopt');
 var colors = require('colors');
 var exec = require('child_process').exec;
 var path = require('path');
 
-var args = process.argv.slice(2);
 var opts = {
-	grid: 30,
-	input: path.resolve(process.cwd(), args[0]),
-	output: path.resolve(process.cwd(), args[1] || 'solidsprite.png'),
-	trim: (args[2] && args[2] === '-trim') ? true : false
+	'grid': Number,
+	'trim': Boolean
 };
 
-if (!fs.existsSync(opts.input)) {
-	console.log('✖ '.red + opts.input + ' does not exist.');
+var short_hands = {
+	't': ['--trim'],
+	'g': ['--grid']
+};
+
+// Parse options
+var opts = nopt(opts, short_hands, process.argv);
+
+// Determine input and output from remaining arguments
+var paths = opts.argv.remain;
+var path_input;
+var path_output;
+
+// We should only have an input and output as the remaining args
+if (paths.length !== 2) {
+	console.log('Something doesn\'t seem right, make sure your command looks like this:'.yellow);
+	console.log('solidsprite [input_dir] [output_file] [options]');
 	process.exit(1);
+
 } else {
-	opts.images = fs.readdirSync(opts.input).map(function(img) { return opts.input + '/' + img; });
+	path_input = paths[0];
+	path_output = paths[1];
+}
+
+// Make sure the input dir exists
+if (!fs.existsSync(path_input)) {
+	console.log('✖ '.red + path_input + ' does not exist.');
+	process.exit(1);
+
+// ... determine fullpath to images inside input dir
+} else {
+	opts.images = fs.readdirSync(path_input).map(function(img) {
+		return path.join(path_input, img);
+	});
 }
 
 if (!opts.trim) {
@@ -44,7 +71,7 @@ function createSprite () {
 		exec('convert ' + formatMontageArgs(images_metadata), function (err, stdout, stderr) {
 			if (err) throw err;
 			console.log('✓'.green + ' Sprite completed.');
-			console.log('‣ ' + opts.output);
+			console.log('‣ ' + path_output);
 		});
 	});
 }
@@ -80,7 +107,8 @@ function formatMontageArgs(metadata) {
 
 	for (var i = 0, len = metadata.imgs.length; i < len; i++) {
 		var img = metadata.imgs[i];
-		var square_pos = (y_pos / opts.grid);
+		var grid = opts.grid || 1;
+		var square_pos = (y_pos / grid);
 
 		args.push(
 			'-background',
@@ -92,16 +120,16 @@ function formatMontageArgs(metadata) {
 			'-fill',
 			'white',
 			'-page',
-			['+', metadata.info.maxwidth + opts.grid, '+', y_pos].join(''),
+			['+', metadata.info.maxwidth + grid, '+', y_pos].join(''),
 			['label:', '[', square_pos, ']', img.size.w, 'x', img.size.h].join(''),
 			'-page',
 			['+0+', y_pos].join(''),
 			img.filepath);
 
-		if (img.size.h > opts.grid) {
-			y_pos += Math.ceil(img.size.h / opts.grid) * opts.grid;
+		if (img.size.h > grid) {
+			y_pos += Math.ceil(img.size.h / grid) * grid;
 		} else {
-			y_pos += opts.grid;
+			y_pos += grid;
 		}
 	}
 
@@ -109,6 +137,6 @@ function formatMontageArgs(metadata) {
 		'-background',
 		'none',
 		'-mosaic',
-		opts.output);
+		path_output);
 	return args.join(' ');
 }
