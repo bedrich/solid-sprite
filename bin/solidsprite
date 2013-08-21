@@ -8,12 +8,14 @@ var path = require('path');
 
 var opts = {
 	'grid': Number,
-	'trim': Boolean
+	'trim': Boolean,
+	'vertical': Boolean
 };
 
 var short_hands = {
 	't': ['--trim'],
-	'g': ['--grid']
+	'g': ['--grid'],
+	'v': ['--vertical']
 };
 
 // Parse options
@@ -107,33 +109,24 @@ function formatIdentify (id_arr) {
 
 function formatMontageArgs(metadata) {
 	var args = [];
-	var y_pos = 0;
+	var pos = 0;
 
 	for (var i = 0, len = metadata.imgs.length; i < len; i++) {
 		var img = metadata.imgs[i];
+		var factor = opts.vertical ? img.size.h : img.size.w;
 		var grid = opts.grid || 1;
-		var square_pos = (y_pos / grid);
 
-		args.push(
-			'-background',
-			'gray',
-			'-pointsize',
-			'11',
-			'-font',
-			'Helvetica',
-			'-fill',
-			'white',
-			'-page',
-			['+', metadata.info.maxwidth + grid, '+', y_pos].join(''),
-			['label:', '[', square_pos, ']', img.size.w, 'x', img.size.h].join(''),
-			'-page',
-			['+0+', y_pos].join(''),
-			img.filepath);
+		if (opts.vertical) {
+			args.push('-page ' + '+0+' + pos + ' ' + img.filepath);
 
-		if (img.size.h > grid) {
-			y_pos += Math.ceil(img.size.h / grid) * grid;
 		} else {
-			y_pos += grid;
+			args.push('-page +' + pos + '+0 ' + img.filepath);
+		}
+
+		if (factor > grid) {
+			pos += Math.ceil(factor / grid) * grid;
+		} else {
+			pos += grid;
 		}
 	}
 
@@ -142,6 +135,7 @@ function formatMontageArgs(metadata) {
 		'none',
 		'-mosaic',
 		path_output);
+	console.log('convert ' + args.join(' '));
 	return args.join(' ');
 }
 
@@ -149,9 +143,11 @@ function getScssVariables(metadata) {
 	var images = metadata.imgs;
 	var normal = [];
 	var normal_offsets = [];
+	var widths = [];
+	var heights = [];
 	var active = [];
 	var active_offsets = [];
-	var y_pos = 0;
+	var pos = 0;
 
 	for (var i = 0, len = images.length; i < len; i++) {
 		var image = images[i];
@@ -162,24 +158,28 @@ function getScssVariables(metadata) {
 		// this will be used for mapping hover states
 		if (filename.indexOf('active') >= 0) {
 			active.push('"' + filename + '"');
-			active_offsets.push('0 ' + y_pos + 'px');
+			active_offsets.push(opts.vertical ? '0 ' + pos + 'px' : pos + 'px 0');
 
 		} else {
 			normal.push('"' + filename + '"');
-			normal_offsets.push('0 ' + y_pos + 'px');
+			normal_offsets.push(opts.vertical ? '0 ' + pos + 'px' : pos + 'px 0');
+			widths.push(image.size.w + 'px');
+			heights.push(image.size.h + 'px');
 		}
 
 		if (image.size.h > grid) {
-			y_pos += Math.ceil(image.size.h / grid) * grid;
+			pos += Math.ceil(image.size.h / grid) * grid;
 
 		} else {
-			y_pos += grid;
+			pos += grid;
 		}
 	}
 
 	return [
 		'$default: '.cyan, normal.join(', ') + ';\n',
 		'$default_offsets: '.cyan + normal_offsets.join(', ') + ';\n',
+		'$widths: '.cyan, widths.join(', ') + ';\n',
+		'$heights: '.cyan + heights.join(', ') + ';\n',
 		'$active: '.cyan, active.join(', ') + ';\n',
 		'$active_offsets: '.cyan + active_offsets.join(', ') + ';\n'
 	].join('');
