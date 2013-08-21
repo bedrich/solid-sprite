@@ -54,7 +54,7 @@ if (!opts.trim) {
 }
 
 function trimImages (cb) {
-	console.log('‣' + ' Trimming images...');
+	console.log('\n‣' + ' Trimming images...');
 	exec('mogrify -trim ' + opts.images.join(' '), function (err, stdout, stderr) {
 		if (err) throw err;
 		console.log('✓'.green + ' Trimming completed');
@@ -66,12 +66,16 @@ function createSprite () {
 	console.log('‣' + ' Piecing sprite together...');
 	exec('identify ' + opts.images.join(' '), function (err, stdout, stderr) {
 		if (err) throw err;
+
 		var images_metadata = formatIdentify(stdout.split('\n'));
 
 		exec('convert ' + formatMontageArgs(images_metadata), function (err, stdout, stderr) {
 			if (err) throw err;
-			console.log('✓'.green + ' Sprite completed.');
+
+			console.log('✓ '.green + 'Sprite completed.');
 			console.log('‣ ' + path_output);
+			console.log('\nFiles As SASS Lists\n'.yellow);
+			console.log('' + getScssVariables(images_metadata));
 		});
 	});
 }
@@ -139,4 +143,29 @@ function formatMontageArgs(metadata) {
 		'-mosaic',
 		path_output);
 	return args.join(' ');
+}
+
+function getScssVariables(metadata) {
+	var images = metadata.imgs;
+	var filenames = [];
+	var positions = [];
+	var y_pos = 0;
+
+	for (var i = 0, len = images.length; i < len; i++) {
+		var image = images[i];
+		var filename = path.basename(image.filepath, '.' + image.filetype.toLowerCase());
+		var grid = opts.grid || 1;
+
+		filenames.push(filename);
+		positions.push('0 ' + y_pos + 'px');
+
+		if (image.size.h > grid) {
+			y_pos += Math.ceil(image.size.h / grid) * grid;
+
+		} else {
+			y_pos += grid;
+		}
+	}
+
+	return '$filenames: '.cyan + filenames.join(',') + ';\n' + '$positions: '.cyan + positions.join(',') + ';\n';
 }
