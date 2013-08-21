@@ -23,4 +23,4 @@ Creating sprites like a boss.
 
 From within the directory where you installed `solid-sprite`:
 
-        ./bin/solidsprite [images_directory] [sprite_filename]
+    ./bin/solidsprite [images_directory] [sprite_filename]
