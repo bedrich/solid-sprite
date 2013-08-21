@@ -147,8 +147,10 @@ function formatMontageArgs(metadata) {
 
 function getScssVariables(metadata) {
 	var images = metadata.imgs;
-	var filenames = [];
-	var positions = [];
+	var normal = [];
+	var normal_offsets = [];
+	var active = [];
+	var active_offsets = [];
 	var y_pos = 0;
 
 	for (var i = 0, len = images.length; i < len; i++) {
@@ -156,8 +158,16 @@ function getScssVariables(metadata) {
 		var filename = path.basename(image.filepath, '.' + image.filetype.toLowerCase());
 		var grid = opts.grid || 1;
 
-		filenames.push(filename);
-		positions.push('0 ' + y_pos + 'px');
+		// if the filename contains 'active', place it a separate list
+		// this will be used for mapping hover states
+		if (filename.indexOf('active') >= 0) {
+			active.push('"' + filename + '"');
+			active_offsets.push('0 ' + y_pos + 'px');
+
+		} else {
+			normal.push('"' + filename + '"');
+			normal_offsets.push('0 ' + y_pos + 'px');
+		}
 
 		if (image.size.h > grid) {
 			y_pos += Math.ceil(image.size.h / grid) * grid;
@@ -167,5 +177,10 @@ function getScssVariables(metadata) {
 		}
 	}
 
-	return '$filenames: '.cyan + filenames.join(',') + ';\n' + '$positions: '.cyan + positions.join(',') + ';\n';
+	return [
+		'$default: '.cyan, normal.join(', ') + ';\n',
+		'$default_offsets: '.cyan + normal_offsets.join(', ') + ';\n',
+		'$active: '.cyan, active.join(', ') + ';\n',
+		'$active_offsets: '.cyan + active_offsets.join(', ') + ';\n'
+	].join('');
 }
