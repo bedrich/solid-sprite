@@ -116,7 +116,7 @@ function formatMontageArgs(metadata) {
 			'-pointsize',
 			'11',
 			'-font',
-			'Verdana',
+			'Helvetica',
 			'-fill',
 			'white',
 			'-page',
