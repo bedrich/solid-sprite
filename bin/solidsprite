@@ -158,11 +158,11 @@ function getScssVariables(metadata) {
 		// this will be used for mapping hover states
 		if (filename.indexOf('active') >= 0) {
 			active.push('"' + filename + '"');
-			active_offsets.push(opts.vertical ? '0 ' + pos + 'px' : pos + 'px 0');
+			active_offsets.push(opts.vertical ? '0 -' + pos + 'px' : '-' + pos + 'px 0');
 
 		} else {
 			normal.push('"' + filename + '"');
-			normal_offsets.push(opts.vertical ? '0 ' + pos + 'px' : pos + 'px 0');
+			normal_offsets.push(opts.vertical ? '0 -' + pos + 'px' : '-' + pos + 'px 0');
 			widths.push(image.size.w + 'px');
 			heights.push(image.size.h + 'px');
 		}
