@@ -153,6 +153,7 @@ function getScssVariables(metadata) {
 		var image = images[i];
 		var filename = path.basename(image.filepath, '.' + image.filetype.toLowerCase());
 		var grid = opts.grid || 1;
+		var factor = opts.vertical ? image.size.h : image.size.w;
 
 		// if the filename contains 'active', place it a separate list
 		// this will be used for mapping hover states
@@ -167,8 +168,8 @@ function getScssVariables(metadata) {
 			heights.push(image.size.h + 'px');
 		}
 
-		if (image.size.h > grid) {
-			pos += Math.ceil(image.size.h / grid) * grid;
+		if (factor > grid) {
+			pos += Math.ceil(factor / grid) * grid;
 
 		} else {
 			pos += grid;
