@@ -29,3 +29,5 @@ Options
 
 - `-g` Grid value, e.g. `30`
 - `-v` Will glue images vertically rather than horizontally
+- `-t` Will remove transparent pixels from images before making sprite (caution: this will modify the original images).
+- `--debug` Will append labels to the sprite with position and size information. This will also force the sprite to be vertical.
