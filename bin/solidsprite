@@ -9,7 +9,8 @@ var path = require('path');
 var opts = {
 	'grid': Number,
 	'trim': Boolean,
-	'vertical': Boolean
+	'vertical': Boolean,
+	'debug': Boolean
 };
 
 var short_hands = {
@@ -20,6 +21,10 @@ var short_hands = {
 
 // Parse options
 var opts = nopt(opts, short_hands, process.argv);
+
+if (opts.debug) {
+	opts.vertical = true;
+}
 
 // Determine input and output from remaining arguments
 var paths = opts.argv.remain;
@@ -115,6 +120,25 @@ function formatMontageArgs(metadata) {
 		var img = metadata.imgs[i];
 		var factor = opts.vertical ? img.size.h : img.size.w;
 		var grid = opts.grid || 1;
+
+		if (opts.debug) {
+			args.push(
+				'-background',
+				'gray',
+				'-pointsize',
+				'11',
+				'-font',
+				'Helvetica',
+				'-fill',
+				'white',
+				'-page',
+				['+', metadata.info.maxwidth + grid, '+', pos].join(''),
+				['label:', '[', pos / grid, ']', img.size.w, 'x', img.size.h].join(''),
+				'-page',
+				['+0+', pos].join(''),
+				img.filepath
+			);
+		}
 
 		if (opts.vertical) {
 			args.push('-page ' + '+0+' + pos + ' ' + img.filepath);
