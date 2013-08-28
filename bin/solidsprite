@@ -54,8 +54,12 @@ if (!fs.existsSync(path_input)) {
 	});
 }
 
+// Removes `.DS_Store` from sprite directory
+exec('rm ' + path.resolve(path_input, '.DS_Store'))
+
 if (!opts.trim) {
 	createSprite();
+
 } else {
 	trimImages(createSprite);
 }
@@ -184,13 +188,12 @@ function getScssVariables(metadata) {
 		if (filename.indexOf('active') >= 0) {
 			active.push('"' + filename + '"');
 			active_offsets.push(opts.vertical ? '0 -' + pos + 'px' : '-' + pos + 'px 0');
-
-		} else {
-			normal.push('"' + filename + '"');
-			normal_offsets.push(opts.vertical ? '0 -' + pos + 'px' : '-' + pos + 'px 0');
-			widths.push(image.size.w + 'px');
-			heights.push(image.size.h + 'px');
 		}
+
+		normal.push('"' + filename + '"');
+		normal_offsets.push(opts.vertical ? '0 -' + pos + 'px' : '-' + pos + 'px 0');
+		widths.push(image.size.w + 'px');
+		heights.push(image.size.h + 'px');
 
 		if (factor > grid) {
 			pos += Math.ceil(factor / grid) * grid;
